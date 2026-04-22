@@ -283,9 +283,9 @@
             <div class="spotify-track" id="sp-track">Connect Spotify to see track</div>
             <div class="spotify-artist" id="sp-artist">Go to Integrations tab</div>
             <div class="spotify-controls">
-              <button class="sp-btn" title="Previous">⏮</button>
-              <button class="sp-btn" id="sp-play" title="Play/Pause">▶</button>
-              <button class="sp-btn" title="Next">⏭</button>
+              <button class="sp-btn" onclick="spotifyControl('prev')" title="Previous">⏮</button>
+              <button class="sp-btn" id="sp-play" onclick="spotifyControl('play')" title="Play/Pause">▶</button>
+              <button class="sp-btn" onclick="spotifyControl('next')" title="Next">⏭</button>
             </div>
           </div>
         </div>
@@ -573,7 +573,7 @@
             <div class="int-name">Spotify</div>
             <div class="int-status"><span class="int-dot" id="spotify-dot"></span><span id="spotify-status-text">Not connected</span></div>
           </div>
-          <button class="btn btn-ghost btn-sm" onclick="openModal('spotify-modal')">Setup</button>
+          <button class="btn btn-ghost btn-sm" id="spotify-connect-btn" onclick="connectSpotify()">Connect</button>
         </div>
 
         <div class="integration-card">
@@ -1408,12 +1408,14 @@ function saveGCalKey() {
 }
 
 function updateIntegrationStatus() {
-  const sp = load('spotify-client-id','');
+  const spConnected = !!load('sp_access','');
   const gm = load('gmail-client-id','');
   const gc = load('gcal-client-id','');
 
-  document.getElementById('spotify-dot').className = 'int-dot' + (sp ? ' connected' : '');
-  document.getElementById('spotify-status-text').textContent = sp ? 'Client ID saved — OAuth flow needed' : 'Not connected';
+  document.getElementById('spotify-dot').className = 'int-dot' + (spConnected ? ' connected' : '');
+  document.getElementById('spotify-status-text').textContent = spConnected ? 'Connected ✓' : 'Not connected';
+  const spBtn = document.getElementById('spotify-connect-btn');
+  if (spBtn) { spBtn.textContent = spConnected ? 'Disconnect' : 'Connect'; spBtn.onclick = spConnected ? disconnectSpotify : connectSpotify; }
 
   document.getElementById('gmail-dot').className = 'int-dot' + (gm ? ' connected' : '');
   document.getElementById('gmail-status-text').textContent = gm ? 'Client ID saved — OAuth flow needed' : 'Not connected';
@@ -1421,8 +1423,6 @@ function updateIntegrationStatus() {
   document.getElementById('gcal-dot').className = 'int-dot' + (gc ? ' connected' : '');
   document.getElementById('gcal-status-text').textContent = gc ? 'Client ID saved — OAuth flow needed' : 'Not connected';
 
-  // Pre-fill inputs
-  if (sp) document.getElementById('spotify-client-id').value = sp;
   if (gm) { document.getElementById('gmail-client-id').value = gm; document.getElementById('gcal-client-id').value = gm; }
 }
 
@@ -1450,6 +1450,98 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
 });
 
+// ===== SPOTIFY PKCE =====
+const SPOTIFY_CLIENT_ID = '386c634ab9c140fdbaafcd27ca4d3bc5';
+const SPOTIFY_REDIRECT = 'https://paullifedashboard.netlify.app/dashboard.html';
+const SPOTIFY_SCOPES = 'user-read-currently-playing user-read-playback-state user-modify-playback-state user-read-recently-played';
+
+function generateVerifier() {
+  const arr = new Uint32Array(56);
+  crypto.getRandomValues(arr);
+  return Array.from(arr, d => ('0'+d.toString(16)).slice(-2)).join('');
+}
+
+async function generateChallenge(verifier) {
+  const data = new TextEncoder().encode(verifier);
+  const digest = await crypto.subtle.digest('SHA-256', data);
+  return btoa(String.fromCharCode(...new Uint8Array(digest))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+}
+
+async function connectSpotify() {
+  const verifier = generateVerifier();
+  const challenge = await generateChallenge(verifier);
+  save('sp_verifier', verifier);
+  const params = new URLSearchParams({ client_id: SPOTIFY_CLIENT_ID, response_type: 'code', redirect_uri: SPOTIFY_REDIRECT, scope: SPOTIFY_SCOPES, code_challenge_method: 'S256', code_challenge: challenge, state: 'spotify' });
+  window.location = 'https://accounts.spotify.com/authorize?' + params;
+}
+
+async function handleSpotifyCallback(code) {
+  const verifier = load('sp_verifier', '');
+  const res = await fetch('https://accounts.spotify.com/api/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ client_id: SPOTIFY_CLIENT_ID, grant_type: 'authorization_code', code, redirect_uri: SPOTIFY_REDIRECT, code_verifier: verifier })
+  });
+  const data = await res.json();
+  if (data.access_token) {
+    save('sp_access', data.access_token);
+    save('sp_refresh', data.refresh_token);
+    save('sp_expiry', Date.now() + data.expires_in * 1000);
+  }
+}
+
+async function refreshSpotify() {
+  const res = await fetch('https://accounts.spotify.com/api/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ client_id: SPOTIFY_CLIENT_ID, grant_type: 'refresh_token', refresh_token: load('sp_refresh','') })
+  });
+  const data = await res.json();
+  if (data.access_token) { save('sp_access', data.access_token); save('sp_expiry', Date.now() + data.expires_in * 1000); }
+  return data.access_token;
+}
+
+async function getSpotifyToken() {
+  if (Date.now() > load('sp_expiry',0) - 60000) return await refreshSpotify();
+  return load('sp_access','');
+}
+
+async function fetchNowPlaying() {
+  const token = await getSpotifyToken();
+  if (!token) return;
+  try {
+    const res = await fetch('https://api.spotify.com/v1/me/player/currently-playing', { headers: { Authorization: 'Bearer ' + token } });
+    if (res.status === 204) { document.getElementById('sp-track').textContent = 'Nothing playing'; document.getElementById('sp-artist').textContent = 'Open Spotify to start music'; return; }
+    const data = await res.json();
+    if (data.item) {
+      document.getElementById('sp-track').textContent = data.item.name;
+      document.getElementById('sp-artist').textContent = data.item.artists.map(a=>a.name).join(', ');
+      document.getElementById('sp-play').textContent = data.is_playing ? '⏸' : '▶';
+      const img = data.item.album?.images?.[0]?.url;
+      const art = document.getElementById('sp-art');
+      if (img) { art.style.cssText = `background:url(${img}) center/cover;width:52px;height:52px;border-radius:6px;flex-shrink:0`; art.textContent = ''; }
+    }
+  } catch(e) {}
+}
+
+async function spotifyControl(action) {
+  const token = await getSpotifyToken();
+  if (!token) return;
+  const map = { play: ['PUT','me/player/play'], pause: ['PUT','me/player/pause'], next: ['POST','me/player/next'], prev: ['POST','me/player/previous'] };
+  const [method, endpoint] = map[action];
+  await fetch('https://api.spotify.com/' + endpoint, { method, headers: { Authorization: 'Bearer ' + token } });
+  setTimeout(fetchNowPlaying, 500);
+}
+
+function disconnectSpotify() {
+  ['sp_access','sp_refresh','sp_expiry','sp_verifier'].forEach(k => localStorage.removeItem('dash_'+k));
+  document.getElementById('sp-track').textContent = 'Connect Spotify to see track';
+  document.getElementById('sp-artist').textContent = 'Go to Integrations tab';
+  document.getElementById('sp-art').textContent = '🎵';
+  document.getElementById('sp-art').style.cssText = '';
+  updateIntegrationStatus();
+}
+
 // ===== RENDER ALL =====
 function renderAll() {
   renderMorningSummary();
@@ -1462,9 +1554,25 @@ function renderAll() {
   updateIntegrationStatus();
 }
 
+// ===== OAUTH CALLBACK HANDLER =====
+async function handleOAuthCallback() {
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('code');
+  const state = params.get('state');
+  if (!code || !state) return;
+  history.replaceState({}, '', window.location.pathname);
+  if (state === 'spotify') await handleSpotifyCallback(code);
+}
+
 // ===== INIT =====
-initMorning();
-renderAll();
+handleOAuthCallback().then(() => {
+  initMorning();
+  renderAll();
+  if (load('sp_access','')) {
+    fetchNowPlaying();
+    setInterval(fetchNowPlaying, 30000);
+  }
+});
 </script>
 </body>
 </html>
