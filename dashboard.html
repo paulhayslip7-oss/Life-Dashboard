@@ -1384,11 +1384,8 @@ function renderBusiness() {
 
 // ===== INTEGRATIONS =====
 function saveSpotifyKey() {
-  const id = document.getElementById('spotify-client-id').value.trim();
-  if (!id) return;
-  save('spotify-client-id', id);
   closeModal('spotify-modal');
-  updateIntegrationStatus();
+  connectSpotify();
 }
 
 function saveGmailKey() {
