@@ -1,0 +1,1470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Paul's Dashboard</title>
+<style>
+  :root {
+    --bg: #0d0d0f;
+    --surface: #16161a;
+    --surface2: #1e1e24;
+    --border: #2a2a35;
+    --accent: #7c6af7;
+    --accent2: #4fa3e0;
+    --green: #4ade80;
+    --red: #f87171;
+    --yellow: #fbbf24;
+    --text: #e8e8f0;
+    --muted: #6b6b80;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; display: flex; height: 100vh; overflow: hidden; }
+
+  /* Sidebar */
+  #sidebar {
+    width: 220px; min-width: 220px; background: var(--surface); border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; padding: 20px 12px; gap: 4px; overflow-y: auto;
+  }
+  .logo { font-size: 18px; font-weight: 700; color: var(--accent); padding: 8px 12px 20px; letter-spacing: -0.5px; }
+  .logo span { color: var(--text); }
+  .nav-section { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); padding: 12px 12px 4px; }
+  .nav-btn {
+    display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px;
+    border: none; background: none; color: var(--muted); cursor: pointer; font-size: 13.5px;
+    text-align: left; width: 100%; transition: all 0.15s;
+  }
+  .nav-btn:hover { background: var(--surface2); color: var(--text); }
+  .nav-btn.active { background: var(--accent)22; color: var(--accent); }
+  .nav-btn .icon { font-size: 16px; width: 20px; text-align: center; }
+
+  /* Main */
+  #main { flex: 1; overflow-y: auto; padding: 28px 32px; }
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* Cards */
+  .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+  .page-title { font-size: 24px; font-weight: 700; }
+  .page-sub { color: var(--muted); font-size: 13px; margin-top: 2px; }
+  .grid { display: grid; gap: 16px; }
+  .grid-2 { grid-template-columns: 1fr 1fr; }
+  .grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .grid-4 { grid-template-columns: repeat(4, 1fr); }
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 20px;
+  }
+  .card-title { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 10px; }
+  .card-value { font-size: 28px; font-weight: 700; }
+  .card-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+  /* Buttons */
+  .btn {
+    padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer;
+    font-size: 13px; font-weight: 500; transition: all 0.15s;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { opacity: 0.85; }
+  .btn-ghost { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-sm { padding: 5px 12px; font-size: 12px; }
+  .btn-danger { background: #3a1a1a; color: var(--red); border: 1px solid #5a2222; }
+  .btn-danger:hover { background: #5a2222; }
+
+  /* Inputs */
+  input, textarea, select {
+    background: var(--surface2); border: 1px solid var(--border); color: var(--text);
+    border-radius: 8px; padding: 9px 12px; font-size: 13px; width: 100%; outline: none;
+    font-family: inherit;
+  }
+  input:focus, textarea:focus, select:focus { border-color: var(--accent); }
+  textarea { resize: vertical; min-height: 80px; }
+  label { font-size: 12px; color: var(--muted); margin-bottom: 4px; display: block; }
+  .form-row { display: flex; gap: 10px; margin-bottom: 12px; flex-direction: column; }
+  .form-row.horiz { flex-direction: row; align-items: flex-end; }
+
+  /* Tags */
+  .tag { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+  .tag-green { background: #14532d44; color: var(--green); }
+  .tag-red { background: #7f1d1d44; color: var(--red); }
+  .tag-yellow { background: #78350f44; color: var(--yellow); }
+  .tag-purple { background: #3b0764aa; color: #a78bfa; }
+  .tag-blue { background: #1e3a5f44; color: var(--accent2); }
+
+  /* Progress bar */
+  .progress-wrap { background: var(--surface2); border-radius: 999px; height: 8px; overflow: hidden; }
+  .progress-bar { height: 100%; border-radius: 999px; background: var(--accent); transition: width 0.4s; }
+
+  /* Morning report */
+  .morning-greeting { font-size: 32px; font-weight: 800; margin-bottom: 4px; }
+  .morning-date { color: var(--muted); font-size: 15px; margin-bottom: 28px; }
+  .weather-widget { display: flex; align-items: center; gap: 16px; }
+  .weather-icon { font-size: 40px; }
+  .section-label { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 12px; }
+
+  /* Todo */
+  .todo-item {
+    display: flex; align-items: center; gap: 12px; padding: 10px 14px;
+    border-radius: 8px; border: 1px solid var(--border); margin-bottom: 8px;
+    background: var(--surface2); transition: all 0.15s;
+  }
+  .todo-item:hover { border-color: var(--border); }
+  .todo-item.done .todo-text { text-decoration: line-through; color: var(--muted); }
+  .todo-check { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--border); cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+  .todo-check.checked { background: var(--accent); border-color: var(--accent); }
+  .todo-text { flex: 1; font-size: 13.5px; }
+  .todo-del { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 16px; opacity: 0; transition: opacity 0.15s; }
+  .todo-item:hover .todo-del { opacity: 1; }
+  .todo-priority { font-size: 10px; padding: 2px 8px; border-radius: 20px; }
+
+  /* Habits */
+  .habit-row { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 8px; background: var(--surface2); }
+  .habit-name { flex: 1; font-size: 13.5px; }
+  .habit-streak { font-size: 12px; color: var(--yellow); }
+  .habit-days { display: flex; gap: 4px; }
+  .habit-day { width: 26px; height: 26px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; cursor: pointer; border: 1px solid var(--border); background: var(--surface); transition: all 0.15s; }
+  .habit-day.done { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .habit-del { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 16px; opacity: 0; transition: opacity 0.15s; }
+  .habit-row:hover .habit-del { opacity: 1; }
+
+  /* Finance */
+  .finance-positive { color: var(--green); }
+  .finance-negative { color: var(--red); }
+  .transaction-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13.5px; }
+  .transaction-item:last-child { border-bottom: none; }
+
+  /* Workout */
+  .workout-log { display: flex; flex-direction: column; gap: 8px; }
+  .exercise-item { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface2); font-size: 13px; }
+  .exercise-item .ex-name { flex: 1; font-weight: 500; }
+
+  /* Business */
+  .idea-card { padding: 14px 16px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface2); margin-bottom: 10px; }
+  .idea-title { font-weight: 600; font-size: 14px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: flex-start; }
+  .idea-desc { font-size: 13px; color: var(--muted); margin-bottom: 8px; line-height: 1.5; }
+
+  /* Integration status */
+  .integration-card { display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface2); margin-bottom: 10px; }
+  .int-icon { font-size: 24px; width: 36px; text-align: center; }
+  .int-info { flex: 1; }
+  .int-name { font-weight: 600; font-size: 14px; }
+  .int-status { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .int-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); margin-right: 6px; display: inline-block; }
+  .int-dot.connected { background: var(--green); }
+
+  /* Spotify widget */
+  .spotify-widget { background: #1a2a1a; border: 1px solid #1db95444; border-radius: var(--radius); padding: 16px; display: flex; align-items: center; gap: 14px; }
+  .spotify-art { width: 52px; height: 52px; border-radius: 6px; background: var(--surface); display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }
+  .spotify-track { font-weight: 600; font-size: 14px; }
+  .spotify-artist { font-size: 12px; color: var(--muted); }
+  .spotify-controls { display: flex; gap: 10px; margin-top: 8px; }
+  .sp-btn { background: none; border: none; color: var(--text); cursor: pointer; font-size: 18px; transition: color 0.15s; }
+  .sp-btn:hover { color: #1db954; }
+
+  /* Gmail */
+  .email-item { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); cursor: pointer; }
+  .email-item:hover { opacity: 0.8; }
+  .email-sender { font-weight: 600; font-size: 13px; min-width: 120px; }
+  .email-subject { font-size: 13px; flex: 1; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .email-time { font-size: 11px; color: var(--muted); flex-shrink: 0; }
+  .email-unread .email-sender { color: var(--text); }
+  .email-unread .email-subject { color: var(--text); font-weight: 500; }
+
+  /* Calendar */
+  .cal-event { display: flex; gap: 10px; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .cal-time { color: var(--accent2); font-weight: 500; min-width: 70px; font-size: 12px; }
+  .cal-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); margin-top: 3px; flex-shrink: 0; }
+  .cal-title { font-weight: 500; }
+  .cal-sub { font-size: 11px; color: var(--muted); }
+
+  /* Modal */
+  .modal-overlay { position: fixed; inset: 0; background: #000000aa; display: none; align-items: center; justify-content: center; z-index: 999; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 28px; width: 460px; max-width: 95vw; }
+  .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 20px; }
+  .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+
+  /* Chart placeholder */
+  .chart-placeholder { height: 120px; background: var(--surface2); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 12px; margin-top: 10px; }
+  .sparkline { display: flex; align-items: flex-end; gap: 4px; height: 60px; padding: 0 4px; }
+  .spark-bar { flex: 1; border-radius: 3px 3px 0 0; background: var(--accent); opacity: 0.7; transition: opacity 0.15s; min-width: 8px; }
+  .spark-bar:hover { opacity: 1; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* Responsive */
+  @media (max-width: 900px) { .grid-3 { grid-template-columns: 1fr 1fr; } .grid-4 { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 600px) { #sidebar { width: 60px; min-width: 60px; } .nav-btn span { display: none; } .logo { padding: 8px 0 20px; text-align: center; } .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; } #main { padding: 20px 16px; } }
+
+  .divider { height: 1px; background: var(--border); margin: 16px 0; }
+  .flex-between { display: flex; align-items: center; justify-content: space-between; }
+  .flex-gap { display: flex; align-items: center; gap: 10px; }
+  .mt-8 { margin-top: 8px; }
+  .mt-16 { margin-top: 16px; }
+  .mb-16 { margin-bottom: 16px; }
+  .text-muted { color: var(--muted); font-size: 13px; }
+  .text-green { color: var(--green); }
+  .text-red { color: var(--red); }
+  .full-width { grid-column: 1 / -1; }
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<nav id="sidebar">
+  <div class="logo">P<span>.</span></div>
+  <div class="nav-section">Overview</div>
+  <button class="nav-btn active" onclick="navigate('morning')" data-page="morning"><span class="icon">☀️</span><span>Morning</span></button>
+  <button class="nav-btn" onclick="navigate('integrations')" data-page="integrations"><span class="icon">🔗</span><span>Integrations</span></button>
+
+  <div class="nav-section">Life</div>
+  <button class="nav-btn" onclick="navigate('todos')" data-page="todos"><span class="icon">✅</span><span>To-Do</span></button>
+  <button class="nav-btn" onclick="navigate('habits')" data-page="habits"><span class="icon">🔥</span><span>Habits</span></button>
+  <button class="nav-btn" onclick="navigate('goals')" data-page="goals"><span class="icon">🎯</span><span>Goals</span></button>
+
+  <div class="nav-section">Health</div>
+  <button class="nav-btn" onclick="navigate('athletic')" data-page="athletic"><span class="icon">💪</span><span>Athletic</span></button>
+
+  <div class="nav-section">Money</div>
+  <button class="nav-btn" onclick="navigate('finance')" data-page="finance"><span class="icon">💰</span><span>Finance</span></button>
+
+  <div class="nav-section">Build</div>
+  <button class="nav-btn" onclick="navigate('business')" data-page="business"><span class="icon">🚀</span><span>Business</span></button>
+</nav>
+
+<!-- Main -->
+<main id="main">
+
+  <!-- ===== MORNING ===== -->
+  <div class="page active" id="page-morning">
+    <div id="morning-greeting" class="morning-greeting"></div>
+    <div id="morning-date" class="morning-date"></div>
+    <div class="grid grid-2 mb-16">
+      <div class="card">
+        <div class="card-title">Today's Focus</div>
+        <textarea id="morning-focus" placeholder="What's the one thing that matters most today?" style="min-height:100px;margin-top:4px;" oninput="save('morning-focus',this.value)"></textarea>
+      </div>
+      <div class="card">
+        <div class="card-title">Gratitude</div>
+        <textarea id="morning-gratitude" placeholder="3 things you're grateful for..." style="min-height:100px;margin-top:4px;" oninput="save('morning-gratitude',this.value)"></textarea>
+      </div>
+    </div>
+
+    <div class="grid grid-3">
+      <div class="card">
+        <div class="card-title">Habits Today</div>
+        <div id="morning-habits-summary"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Top Tasks</div>
+        <div id="morning-todos-summary"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Quote of the Day</div>
+        <div id="daily-quote" style="font-size:13px;line-height:1.6;color:var(--muted);margin-top:4px;font-style:italic;"></div>
+        <div id="daily-quote-author" style="font-size:11px;color:var(--accent);margin-top:8px;"></div>
+      </div>
+    </div>
+
+    <div style="margin-top:16px;" class="grid grid-2">
+      <div class="card full-width">
+        <div class="flex-between mb-16">
+          <div class="card-title" style="margin-bottom:0">Now Playing</div>
+          <a id="spotify-link" href="#" target="_blank" style="font-size:12px;color:#1db954;text-decoration:none;">Open Spotify →</a>
+        </div>
+        <div class="spotify-widget">
+          <div class="spotify-art" id="sp-art">🎵</div>
+          <div style="flex:1">
+            <div class="spotify-track" id="sp-track">Connect Spotify to see track</div>
+            <div class="spotify-artist" id="sp-artist">Go to Integrations tab</div>
+            <div class="spotify-controls">
+              <button class="sp-btn" title="Previous">⏮</button>
+              <button class="sp-btn" id="sp-play" title="Play/Pause">▶</button>
+              <button class="sp-btn" title="Next">⏭</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:16px;" class="grid grid-2">
+      <div class="card">
+        <div class="flex-between mb-16">
+          <div class="card-title" style="margin-bottom:0">Upcoming Events</div>
+        </div>
+        <div id="morning-calendar"></div>
+      </div>
+      <div class="card">
+        <div class="flex-between mb-16">
+          <div class="card-title" style="margin-bottom:0">Inbox Preview</div>
+        </div>
+        <div id="morning-gmail"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TODOS ===== -->
+  <div class="page" id="page-todos">
+    <div class="page-header">
+      <div>
+        <div class="page-title">To-Do</div>
+        <div class="page-sub" id="todo-summary-text"></div>
+      </div>
+      <button class="btn btn-primary" onclick="openModal('todo-modal')">+ Add Task</button>
+    </div>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <div class="flex-between mb-16">
+          <div class="card-title" style="margin-bottom:0">🔴 High Priority</div>
+          <span id="high-count" class="tag tag-red">0</span>
+        </div>
+        <div id="todos-high"></div>
+      </div>
+      <div class="card">
+        <div class="flex-between mb-16">
+          <div class="card-title" style="margin-bottom:0">🟡 Medium Priority</div>
+          <span id="med-count" class="tag tag-yellow">0</span>
+        </div>
+        <div id="todos-med"></div>
+      </div>
+      <div class="card">
+        <div class="flex-between mb-16">
+          <div class="card-title" style="margin-bottom:0">🟢 Low Priority</div>
+          <span id="low-count" class="tag tag-green">0</span>
+        </div>
+        <div id="todos-low"></div>
+      </div>
+      <div class="card">
+        <div class="flex-between mb-16">
+          <div class="card-title" style="margin-bottom:0">✅ Completed</div>
+          <button class="btn btn-ghost btn-sm" onclick="clearDone()">Clear</button>
+        </div>
+        <div id="todos-done"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== HABITS ===== -->
+  <div class="page" id="page-habits">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Habits</div>
+        <div class="page-sub">Track your daily habits — streaks update automatically</div>
+      </div>
+      <button class="btn btn-primary" onclick="openModal('habit-modal')">+ Add Habit</button>
+    </div>
+    <div class="grid grid-4 mb-16">
+      <div class="card">
+        <div class="card-title">Today's Completion</div>
+        <div class="card-value" id="habit-pct">0%</div>
+        <div class="mt-8"><div class="progress-wrap"><div class="progress-bar" id="habit-progress" style="width:0%"></div></div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Best Streak</div>
+        <div class="card-value" id="habit-best-streak">0 🔥</div>
+        <div class="card-sub">days</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Total Habits</div>
+        <div class="card-value" id="habit-total">0</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Week Score</div>
+        <div class="card-value" id="habit-week-score">0%</div>
+        <div class="card-sub">last 7 days avg</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="flex-between mb-16">
+        <div class="section-label" style="margin-bottom:0">Daily Tracker</div>
+        <div style="display:flex;gap:4px;font-size:11px;color:var(--muted)" id="habit-day-labels"></div>
+      </div>
+      <div id="habits-list"></div>
+    </div>
+  </div>
+
+  <!-- ===== GOALS ===== -->
+  <div class="page" id="page-goals">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Goals</div>
+        <div class="page-sub">Long-term goals with progress tracking</div>
+      </div>
+      <button class="btn btn-primary" onclick="openModal('goal-modal')">+ Add Goal</button>
+    </div>
+    <div id="goals-list" class="grid"></div>
+  </div>
+
+  <!-- ===== ATHLETIC ===== -->
+  <div class="page" id="page-athletic">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Athletic</div>
+        <div class="page-sub">Training logs, PRs, and body metrics</div>
+      </div>
+      <button class="btn btn-primary" onclick="openModal('workout-modal')">+ Log Workout</button>
+    </div>
+    <div class="grid grid-4 mb-16">
+      <div class="card">
+        <div class="card-title">Weight</div>
+        <div class="card-value" id="stat-weight">--</div>
+        <div class="card-sub">lbs</div>
+      </div>
+      <div class="card">
+        <div class="card-title">This Week</div>
+        <div class="card-value" id="stat-workouts-week">0</div>
+        <div class="card-sub">workouts</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Total Logged</div>
+        <div class="card-value" id="stat-workouts-total">0</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Streak</div>
+        <div class="card-value" id="stat-workout-streak">0 🔥</div>
+        <div class="card-sub">days</div>
+      </div>
+    </div>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <div class="flex-between mb-16">
+          <div class="section-label" style="margin-bottom:0">Personal Records</div>
+          <button class="btn btn-ghost btn-sm" onclick="openModal('pr-modal')">+ PR</button>
+        </div>
+        <div id="pr-list"></div>
+      </div>
+      <div class="card">
+        <div class="flex-between mb-16">
+          <div class="section-label" style="margin-bottom:0">Body Metrics</div>
+          <button class="btn btn-ghost btn-sm" onclick="openModal('metrics-modal')">Update</button>
+        </div>
+        <div id="metrics-list"></div>
+      </div>
+    </div>
+
+    <div class="card mt-16">
+      <div class="flex-between mb-16">
+        <div class="section-label" style="margin-bottom:0">Workout Log</div>
+      </div>
+      <div id="workout-log" class="workout-log"></div>
+    </div>
+  </div>
+
+  <!-- ===== FINANCE ===== -->
+  <div class="page" id="page-finance">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Finance</div>
+        <div class="page-sub">Budget, transactions, and net worth tracking</div>
+      </div>
+      <button class="btn btn-primary" onclick="openModal('transaction-modal')">+ Transaction</button>
+    </div>
+    <div class="grid grid-4 mb-16">
+      <div class="card">
+        <div class="card-title">Net Worth</div>
+        <div class="card-value finance-positive" id="fin-networth">$0</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Monthly Income</div>
+        <div class="card-value finance-positive" id="fin-income">$0</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Monthly Spend</div>
+        <div class="card-value finance-negative" id="fin-spend">$0</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Savings Rate</div>
+        <div class="card-value" id="fin-savings-rate">0%</div>
+        <div class="mt-8"><div class="progress-wrap"><div class="progress-bar" id="savings-bar" style="width:0%;background:var(--green)"></div></div></div>
+      </div>
+    </div>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <div class="flex-between mb-16">
+          <div class="section-label" style="margin-bottom:0">Transactions</div>
+          <select id="tx-filter" onchange="renderFinance()" style="width:auto;padding:5px 8px;font-size:12px;">
+            <option value="all">All</option>
+            <option value="income">Income</option>
+            <option value="expense">Expenses</option>
+          </select>
+        </div>
+        <div id="transactions-list"></div>
+      </div>
+      <div class="card">
+        <div class="flex-between mb-16">
+          <div class="section-label" style="margin-bottom:0">Budget Categories</div>
+          <button class="btn btn-ghost btn-sm" onclick="openModal('budget-modal')">Edit</button>
+        </div>
+        <div id="budget-list"></div>
+      </div>
+    </div>
+
+    <div class="card mt-16">
+      <div class="flex-between mb-16">
+        <div class="section-label" style="margin-bottom:0">Accounts & Assets</div>
+        <button class="btn btn-ghost btn-sm" onclick="openModal('account-modal')">+ Account</button>
+      </div>
+      <div id="accounts-list" class="grid grid-3"></div>
+    </div>
+  </div>
+
+  <!-- ===== BUSINESS ===== -->
+  <div class="page" id="page-business">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Business</div>
+        <div class="page-sub">Ideas, projects, and initiatives</div>
+      </div>
+      <button class="btn btn-primary" onclick="openModal('idea-modal')">+ Add Idea</button>
+    </div>
+    <div class="grid grid-3">
+      <div class="card">
+        <div class="card-title">Total Ideas</div>
+        <div class="card-value" id="biz-total">0</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Active Projects</div>
+        <div class="card-value" id="biz-active">0</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Validated</div>
+        <div class="card-value" id="biz-validated">0</div>
+      </div>
+    </div>
+
+    <div style="margin-top:16px;" class="grid grid-3">
+      <div class="card">
+        <div class="section-label">💡 Ideas</div>
+        <div id="biz-ideas"></div>
+      </div>
+      <div class="card">
+        <div class="section-label">🔨 In Progress</div>
+        <div id="biz-in-progress"></div>
+      </div>
+      <div class="card">
+        <div class="section-label">✅ Validated / Launched</div>
+        <div id="biz-validated-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== INTEGRATIONS ===== -->
+  <div class="page" id="page-integrations">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Integrations</div>
+        <div class="page-sub">Connect your services</div>
+      </div>
+    </div>
+
+    <div class="grid grid-2">
+      <div>
+        <div class="integration-card">
+          <div class="int-icon">🎵</div>
+          <div class="int-info">
+            <div class="int-name">Spotify</div>
+            <div class="int-status"><span class="int-dot" id="spotify-dot"></span><span id="spotify-status-text">Not connected</span></div>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="openModal('spotify-modal')">Setup</button>
+        </div>
+
+        <div class="integration-card">
+          <div class="int-icon">📧</div>
+          <div class="int-info">
+            <div class="int-name">Gmail</div>
+            <div class="int-status"><span class="int-dot" id="gmail-dot"></span><span id="gmail-status-text">Not connected</span></div>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="openModal('gmail-modal')">Setup</button>
+        </div>
+
+        <div class="integration-card">
+          <div class="int-icon">📅</div>
+          <div class="int-info">
+            <div class="int-name">Google Calendar</div>
+            <div class="int-status"><span class="int-dot" id="gcal-dot"></span><span id="gcal-status-text">Not connected</span></div>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="openModal('gcal-modal')">Setup</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-label">How to Connect APIs</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.8;">
+          <p style="margin-bottom:10px;">Each integration uses its official API. You'll need to:</p>
+          <ol style="padding-left:18px;">
+            <li style="margin-bottom:6px;"><strong style="color:var(--text)">Spotify:</strong> Create an app at <code style="color:var(--accent);background:var(--surface2);padding:1px 5px;border-radius:4px;">developer.spotify.com</code> → get Client ID + Secret → paste below.</li>
+            <li style="margin-bottom:6px;"><strong style="color:var(--text)">Gmail:</strong> Enable Gmail API in Google Cloud Console → create OAuth credentials → paste Client ID below.</li>
+            <li style="margin-bottom:6px;"><strong style="color:var(--text)">Calendar:</strong> Same Google Cloud project as Gmail → enable Calendar API → reuse credentials.</li>
+          </ol>
+          <p style="margin-top:10px;color:var(--accent)">All keys are stored in your browser only (localStorage). Nothing is sent to any server.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ===== MODALS ===== -->
+
+<!-- Todo Modal -->
+<div class="modal-overlay" id="todo-modal">
+  <div class="modal">
+    <div class="modal-title">Add Task</div>
+    <div class="form-row"><label>Task</label><input id="todo-input" placeholder="What needs to be done?"></div>
+    <div class="form-row"><label>Priority</label>
+      <select id="todo-priority">
+        <option value="high">🔴 High</option>
+        <option value="med" selected>🟡 Medium</option>
+        <option value="low">🟢 Low</option>
+      </select>
+    </div>
+    <div class="form-row"><label>Due Date (optional)</label><input type="date" id="todo-due"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('todo-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="addTodo()">Add Task</button>
+    </div>
+  </div>
+</div>
+
+<!-- Habit Modal -->
+<div class="modal-overlay" id="habit-modal">
+  <div class="modal">
+    <div class="modal-title">Add Habit</div>
+    <div class="form-row"><label>Habit Name</label><input id="habit-input" placeholder="e.g. Morning run, Read 20 min, Cold shower..."></div>
+    <div class="form-row"><label>Emoji Icon</label><input id="habit-icon" placeholder="🏃" maxlength="2" style="width:80px"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('habit-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="addHabit()">Add Habit</button>
+    </div>
+  </div>
+</div>
+
+<!-- Goal Modal -->
+<div class="modal-overlay" id="goal-modal">
+  <div class="modal">
+    <div class="modal-title">Add Goal</div>
+    <div class="form-row"><label>Goal Title</label><input id="goal-title" placeholder="e.g. Launch my SaaS, Run a marathon..."></div>
+    <div class="form-row"><label>Description</label><textarea id="goal-desc" placeholder="Why this goal matters..."></textarea></div>
+    <div class="form-row horiz">
+      <div style="flex:1"><label>Category</label>
+        <select id="goal-category">
+          <option>Health</option><option>Finance</option><option>Career</option><option>Personal</option><option>Business</option>
+        </select>
+      </div>
+      <div style="flex:1"><label>Target Date</label><input type="date" id="goal-date"></div>
+    </div>
+    <div class="form-row horiz">
+      <div style="flex:1"><label>Progress (0-100)</label><input type="number" id="goal-progress" min="0" max="100" value="0"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('goal-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="addGoal()">Add Goal</button>
+    </div>
+  </div>
+</div>
+
+<!-- Workout Modal -->
+<div class="modal-overlay" id="workout-modal">
+  <div class="modal">
+    <div class="modal-title">Log Workout</div>
+    <div class="form-row"><label>Workout Type</label><input id="workout-type" placeholder="e.g. Upper Body, Running, HIIT..."></div>
+    <div class="form-row"><label>Duration (min)</label><input type="number" id="workout-duration" placeholder="45"></div>
+    <div class="form-row"><label>Notes / Exercises</label><textarea id="workout-notes" placeholder="Bench 3x8 @ 185, Squat 4x5 @ 225..."></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('workout-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="addWorkout()">Log It</button>
+    </div>
+  </div>
+</div>
+
+<!-- PR Modal -->
+<div class="modal-overlay" id="pr-modal">
+  <div class="modal">
+    <div class="modal-title">Personal Record</div>
+    <div class="form-row"><label>Exercise</label><input id="pr-exercise" placeholder="e.g. Bench Press, Squat, 1 Mile..."></div>
+    <div class="form-row horiz">
+      <div style="flex:1"><label>Value</label><input id="pr-value" placeholder="225"></div>
+      <div style="flex:1"><label>Unit</label><input id="pr-unit" placeholder="lbs / min:sec"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('pr-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="addPR()">Save PR</button>
+    </div>
+  </div>
+</div>
+
+<!-- Metrics Modal -->
+<div class="modal-overlay" id="metrics-modal">
+  <div class="modal">
+    <div class="modal-title">Update Body Metrics</div>
+    <div class="grid grid-2" style="gap:12px;margin-bottom:16px;">
+      <div class="form-row"><label>Weight (lbs)</label><input type="number" id="m-weight"></div>
+      <div class="form-row"><label>Body Fat %</label><input type="number" id="m-bf"></div>
+      <div class="form-row"><label>Height (in)</label><input type="number" id="m-height"></div>
+      <div class="form-row"><label>Resting HR (bpm)</label><input type="number" id="m-hr"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('metrics-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveMetrics()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Transaction Modal -->
+<div class="modal-overlay" id="transaction-modal">
+  <div class="modal">
+    <div class="modal-title">Add Transaction</div>
+    <div class="form-row"><label>Description</label><input id="tx-desc" placeholder="e.g. Rent, Salary, Groceries..."></div>
+    <div class="form-row horiz">
+      <div style="flex:1"><label>Amount ($)</label><input type="number" id="tx-amount" placeholder="500"></div>
+      <div style="flex:1"><label>Type</label>
+        <select id="tx-type">
+          <option value="income">Income</option>
+          <option value="expense">Expense</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row"><label>Category</label>
+      <select id="tx-category">
+        <option>Housing</option><option>Food</option><option>Transport</option><option>Salary</option>
+        <option>Freelance</option><option>Investment</option><option>Health</option><option>Entertainment</option><option>Other</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('transaction-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="addTransaction()">Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- Budget Modal -->
+<div class="modal-overlay" id="budget-modal">
+  <div class="modal">
+    <div class="modal-title">Edit Budget Categories</div>
+    <div id="budget-edit-list"></div>
+    <div class="form-row horiz mt-16">
+      <div style="flex:2"><input id="budget-cat-name" placeholder="Category name"></div>
+      <div style="flex:1"><input type="number" id="budget-cat-amount" placeholder="Budget $"></div>
+      <button class="btn btn-primary" onclick="addBudgetCat()">Add</button>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="closeModal('budget-modal')">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- Account Modal -->
+<div class="modal-overlay" id="account-modal">
+  <div class="modal">
+    <div class="modal-title">Add Account / Asset</div>
+    <div class="form-row"><label>Name</label><input id="acc-name" placeholder="e.g. Chase Checking, Roth IRA, BTC..."></div>
+    <div class="form-row horiz">
+      <div style="flex:1"><label>Balance ($)</label><input type="number" id="acc-balance"></div>
+      <div style="flex:1"><label>Type</label>
+        <select id="acc-type">
+          <option>Checking</option><option>Savings</option><option>Investment</option><option>Crypto</option><option>Debt</option><option>Other</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('account-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="addAccount()">Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- Idea Modal -->
+<div class="modal-overlay" id="idea-modal">
+  <div class="modal">
+    <div class="modal-title">Add Business Idea</div>
+    <div class="form-row"><label>Title</label><input id="idea-title" placeholder="e.g. AI-powered meal planner..."></div>
+    <div class="form-row"><label>Description</label><textarea id="idea-desc" placeholder="Problem it solves, target market, revenue model..."></textarea></div>
+    <div class="form-row"><label>Status</label>
+      <select id="idea-status">
+        <option value="idea">💡 Idea</option>
+        <option value="progress">🔨 In Progress</option>
+        <option value="validated">✅ Validated</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('idea-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="addIdea()">Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- Spotify Setup Modal -->
+<div class="modal-overlay" id="spotify-modal">
+  <div class="modal">
+    <div class="modal-title">🎵 Connect Spotify</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.6;">
+      1. Go to <strong style="color:var(--text)">developer.spotify.com/dashboard</strong><br>
+      2. Create an app → copy your Client ID<br>
+      3. Add <code style="color:var(--accent);background:var(--surface2);padding:1px 6px;border-radius:4px;">http://localhost</code> as a Redirect URI<br>
+      4. Paste the Client ID below
+    </div>
+    <div class="form-row"><label>Spotify Client ID</label><input id="spotify-client-id" placeholder="Your client ID here"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('spotify-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveSpotifyKey()">Save & Connect</button>
+    </div>
+  </div>
+</div>
+
+<!-- Gmail Setup Modal -->
+<div class="modal-overlay" id="gmail-modal">
+  <div class="modal">
+    <div class="modal-title">📧 Connect Gmail</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.6;">
+      1. Go to <strong style="color:var(--text)">console.cloud.google.com</strong><br>
+      2. Create project → Enable Gmail API<br>
+      3. Create OAuth 2.0 credentials → copy Client ID<br>
+      4. Add this file's path as authorized origin
+    </div>
+    <div class="form-row"><label>Google OAuth Client ID</label><input id="gmail-client-id" placeholder="Your client ID here"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('gmail-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveGmailKey()">Save & Connect</button>
+    </div>
+  </div>
+</div>
+
+<!-- GCal Setup Modal -->
+<div class="modal-overlay" id="gcal-modal">
+  <div class="modal">
+    <div class="modal-title">📅 Connect Google Calendar</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.6;">
+      Uses the same Google OAuth Client ID as Gmail.<br>
+      If you've already set up Gmail, just paste the same Client ID here.<br><br>
+      Enable the <strong style="color:var(--text)">Google Calendar API</strong> in your Cloud project.
+    </div>
+    <div class="form-row"><label>Google OAuth Client ID</label><input id="gcal-client-id" placeholder="Your client ID here"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('gcal-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveGCalKey()">Save & Connect</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== STATE & STORAGE =====
+const QUOTES = [
+  {q:"The secret of getting ahead is getting started.", a:"Mark Twain"},
+  {q:"Don't watch the clock; do what it does. Keep going.", a:"Sam Levenson"},
+  {q:"Success is not final, failure is not fatal: it is the courage to continue that counts.", a:"Winston Churchill"},
+  {q:"Discipline is the bridge between goals and accomplishment.", a:"Jim Rohn"},
+  {q:"You don't have to be great to start, but you have to start to be great.", a:"Zig Ziglar"},
+  {q:"Hard work beats talent when talent doesn't work hard.", a:"Tim Notke"},
+  {q:"The only way to do great work is to love what you do.", a:"Steve Jobs"},
+  {q:"Dream big, start small, act now.", a:"Robin Sharma"},
+  {q:"Focus on being productive instead of busy.", a:"Tim Ferriss"},
+  {q:"In the middle of difficulty lies opportunity.", a:"Albert Einstein"},
+];
+
+function load(key, def) {
+  try { const v = localStorage.getItem('dash_'+key); return v ? JSON.parse(v) : def; } catch(e) { return def; }
+}
+function save(key, val) {
+  try { localStorage.setItem('dash_'+key, typeof val === 'string' ? val : JSON.stringify(val)); } catch(e) {}
+}
+
+let todos = load('todos', []);
+let habits = load('habits', []);
+let goals = load('goals', []);
+let workouts = load('workouts', []);
+let prs = load('prs', []);
+let metrics = load('metrics', {});
+let transactions = load('transactions', []);
+let budgets = load('budgets', [{name:'Housing',limit:1500},{name:'Food',limit:400},{name:'Transport',limit:200},{name:'Entertainment',limit:150}]);
+let accounts = load('accounts', []);
+let ideas = load('ideas', []);
+
+// ===== NAVIGATION =====
+function navigate(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  document.querySelector(`[data-page="${page}"]`).classList.add('active');
+  renderAll();
+}
+
+// ===== MORNING =====
+function initMorning() {
+  const now = new Date();
+  const hour = now.getHours();
+  const greet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  document.getElementById('morning-greeting').textContent = `${greet}, Paul 👋`;
+  document.getElementById('morning-date').textContent = now.toLocaleDateString('en-US', {weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+  const q = QUOTES[now.getDate() % QUOTES.length];
+  document.getElementById('daily-quote').textContent = `"${q.q}"`;
+  document.getElementById('daily-quote-author').textContent = `— ${q.a}`;
+
+  const mf = load('morning-focus', '');
+  const mg = load('morning-gratitude', '');
+  document.getElementById('morning-focus').value = mf;
+  document.getElementById('morning-gratitude').value = mg;
+}
+
+function renderMorningSummary() {
+  // Habits
+  const today = todayKey();
+  const done = habits.filter(h => h.log && h.log[today]);
+  const el = document.getElementById('morning-habits-summary');
+  if (!habits.length) { el.innerHTML = '<div class="text-muted">No habits yet. <a href="#" onclick="navigate(\'habits\');return false" style="color:var(--accent)">Add some →</a></div>'; }
+  else {
+    el.innerHTML = habits.map(h => `
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:13px;">
+        <span style="font-size:14px">${h.icon||'⚪'}</span>
+        <span style="flex:1">${h.name}</span>
+        <span>${h.log && h.log[today] ? '✅' : '⬜'}</span>
+      </div>`).join('');
+  }
+
+  // Todos
+  const highTodos = todos.filter(t => t.priority === 'high' && !t.done).slice(0,3);
+  const tel = document.getElementById('morning-todos-summary');
+  if (!highTodos.length) { tel.innerHTML = '<div class="text-muted">No high priority tasks.</div>'; }
+  else { tel.innerHTML = highTodos.map(t => `<div style="font-size:13px;margin-bottom:6px;display:flex;align-items:center;gap:8px;"><span>🔴</span><span>${t.text}</span></div>`).join(''); }
+
+  // Calendar placeholder
+  const calEl = document.getElementById('morning-calendar');
+  const gcalId = load('gcal-client-id', '');
+  if (!gcalId) {
+    calEl.innerHTML = '<div class="text-muted">Connect Google Calendar in Integrations.</div>';
+  }
+
+  // Gmail placeholder
+  const gmailEl = document.getElementById('morning-gmail');
+  const gmailId = load('gmail-client-id', '');
+  if (!gmailId) {
+    gmailEl.innerHTML = '<div class="text-muted">Connect Gmail in Integrations.</div>';
+  }
+}
+
+// ===== TODOS =====
+function addTodo() {
+  const text = document.getElementById('todo-input').value.trim();
+  if (!text) return;
+  todos.push({ id: Date.now(), text, priority: document.getElementById('todo-priority').value, due: document.getElementById('todo-due').value, done: false });
+  save('todos', todos);
+  closeModal('todo-modal');
+  document.getElementById('todo-input').value = '';
+  renderTodos();
+}
+
+function toggleTodo(id) {
+  const t = todos.find(t => t.id === id);
+  if (t) { t.done = !t.done; save('todos', todos); renderTodos(); }
+}
+
+function deleteTodo(id) {
+  todos = todos.filter(t => t.id !== id);
+  save('todos', todos);
+  renderTodos();
+}
+
+function clearDone() {
+  todos = todos.filter(t => !t.done);
+  save('todos', todos);
+  renderTodos();
+}
+
+function renderTodos() {
+  const priorities = ['high','med','low'];
+  const containers = { high: document.getElementById('todos-high'), med: document.getElementById('todos-med'), low: document.getElementById('todos-low') };
+  const counts = { high: 0, med: 0, low: 0 };
+  priorities.forEach(p => { containers[p].innerHTML = ''; });
+  document.getElementById('todos-done').innerHTML = '';
+
+  todos.forEach(t => {
+    if (t.done) {
+      document.getElementById('todos-done').innerHTML += todoHTML(t);
+      return;
+    }
+    if (containers[t.priority]) { containers[t.priority].innerHTML += todoHTML(t); counts[t.priority]++; }
+  });
+
+  document.getElementById('high-count').textContent = counts.high;
+  document.getElementById('med-count').textContent = counts.med;
+  document.getElementById('low-count').textContent = counts.low;
+
+  const total = todos.length, done = todos.filter(t=>t.done).length;
+  document.getElementById('todo-summary-text').textContent = `${done}/${total} complete`;
+}
+
+function todoHTML(t) {
+  const prColors = { high: 'tag-red', med: 'tag-yellow', low: 'tag-green' };
+  return `<div class="todo-item ${t.done?'done':''}" id="todo-${t.id}">
+    <div class="todo-check ${t.done?'checked':''}" onclick="toggleTodo(${t.id})">${t.done?'✓':''}</div>
+    <span class="todo-text">${t.text}</span>
+    ${t.due ? `<span style="font-size:11px;color:var(--muted)">${t.due}</span>` : ''}
+    <button class="todo-del" onclick="deleteTodo(${t.id})">×</button>
+  </div>`;
+}
+
+// ===== HABITS =====
+function todayKey() { return new Date().toISOString().slice(0,10); }
+function weekKeys() {
+  const keys = [];
+  for(let i=6; i>=0; i--) {
+    const d = new Date(); d.setDate(d.getDate()-i);
+    keys.push(d.toISOString().slice(0,10));
+  }
+  return keys;
+}
+
+function addHabit() {
+  const name = document.getElementById('habit-input').value.trim();
+  if (!name) return;
+  habits.push({ id: Date.now(), name, icon: document.getElementById('habit-icon').value || '⚪', log: {}, streak: 0 });
+  save('habits', habits);
+  closeModal('habit-modal');
+  document.getElementById('habit-input').value = '';
+  document.getElementById('habit-icon').value = '';
+  renderHabits();
+}
+
+function toggleHabitDay(id, dateKey) {
+  const h = habits.find(h => h.id === id);
+  if (!h) return;
+  if (!h.log) h.log = {};
+  h.log[dateKey] = !h.log[dateKey];
+  save('habits', habits);
+  renderHabits();
+}
+
+function deleteHabit(id) {
+  habits = habits.filter(h => h.id !== id);
+  save('habits', habits);
+  renderHabits();
+}
+
+function renderHabits() {
+  const days = weekKeys();
+  const dayNames = days.map(d => new Date(d+'T12:00:00').toLocaleDateString('en-US',{weekday:'narrow'}));
+  const today = todayKey();
+
+  document.getElementById('habit-day-labels').innerHTML = dayNames.map(d => `<span style="width:26px;text-align:center">${d}</span>`).join('');
+
+  const listEl = document.getElementById('habits-list');
+  if (!habits.length) { listEl.innerHTML = '<div class="text-muted" style="padding:10px 0">No habits yet. Add one to start tracking.</div>'; }
+  else {
+    listEl.innerHTML = habits.map(h => {
+      const streak = calcStreak(h);
+      return `<div class="habit-row">
+        <span style="font-size:18px;width:24px;text-align:center">${h.icon}</span>
+        <span class="habit-name">${h.name}</span>
+        <span class="habit-streak">${streak > 0 ? '🔥 '+streak : ''}</span>
+        <div class="habit-days">
+          ${days.map(d => `<div class="habit-day ${h.log && h.log[d] ? 'done' : ''}" onclick="toggleHabitDay(${h.id},'${d}')" title="${d}">${h.log && h.log[d] ? '✓' : ''}</div>`).join('')}
+        </div>
+        <button class="habit-del" onclick="deleteHabit(${h.id})">×</button>
+      </div>`;
+    }).join('');
+  }
+
+  // Stats
+  const todayDone = habits.filter(h => h.log && h.log[today]).length;
+  const pct = habits.length ? Math.round(todayDone/habits.length*100) : 0;
+  document.getElementById('habit-pct').textContent = pct+'%';
+  document.getElementById('habit-progress').style.width = pct+'%';
+  document.getElementById('habit-total').textContent = habits.length;
+
+  const streaks = habits.map(h => calcStreak(h));
+  document.getElementById('habit-best-streak').textContent = (Math.max(0,...streaks)||0)+' 🔥';
+
+  // Week score
+  let totalChecks = 0, possible = habits.length * 7;
+  habits.forEach(h => { days.forEach(d => { if(h.log && h.log[d]) totalChecks++; }); });
+  const weekPct = possible ? Math.round(totalChecks/possible*100) : 0;
+  document.getElementById('habit-week-score').textContent = weekPct+'%';
+}
+
+function calcStreak(h) {
+  let streak = 0;
+  const d = new Date();
+  while(true) {
+    const key = d.toISOString().slice(0,10);
+    if(h.log && h.log[key]) { streak++; d.setDate(d.getDate()-1); }
+    else break;
+    if(streak > 365) break;
+  }
+  return streak;
+}
+
+// ===== GOALS =====
+function addGoal() {
+  const title = document.getElementById('goal-title').value.trim();
+  if (!title) return;
+  goals.push({ id: Date.now(), title, desc: document.getElementById('goal-desc').value, category: document.getElementById('goal-category').value, date: document.getElementById('goal-date').value, progress: parseInt(document.getElementById('goal-progress').value)||0 });
+  save('goals', goals);
+  closeModal('goal-modal');
+  document.getElementById('goal-title').value = '';
+  document.getElementById('goal-desc').value = '';
+  renderGoals();
+}
+
+function deleteGoal(id) {
+  goals = goals.filter(g => g.id !== id);
+  save('goals', goals);
+  renderGoals();
+}
+
+function updateGoalProgress(id, val) {
+  const g = goals.find(g => g.id === id);
+  if (g) { g.progress = parseInt(val); save('goals', goals); renderGoals(); }
+}
+
+function renderGoals() {
+  const el = document.getElementById('goals-list');
+  if (!goals.length) { el.innerHTML = '<div class="card"><div class="text-muted">No goals yet. Add your first goal.</div></div>'; return; }
+  el.className = 'grid grid-2';
+  el.innerHTML = goals.map(g => {
+    const catColors = { Health:'tag-green', Finance:'tag-yellow', Career:'tag-blue', Personal:'tag-purple', Business:'tag-red' };
+    return `<div class="card">
+      <div class="flex-between mb-16">
+        <span class="tag ${catColors[g.category]||'tag-blue'}">${g.category}</span>
+        <button class="btn btn-ghost btn-sm" style="color:var(--red);border-color:#5a2222" onclick="deleteGoal(${g.id})">Remove</button>
+      </div>
+      <div style="font-size:17px;font-weight:700;margin-bottom:6px">${g.title}</div>
+      ${g.desc ? `<div class="text-muted" style="margin-bottom:12px;line-height:1.5">${g.desc}</div>` : ''}
+      ${g.date ? `<div style="font-size:11px;color:var(--muted);margin-bottom:10px">Target: ${g.date}</div>` : ''}
+      <div class="flex-between" style="margin-bottom:6px"><span style="font-size:12px;color:var(--muted)">Progress</span><span style="font-size:13px;font-weight:600">${g.progress}%</span></div>
+      <div class="progress-wrap"><div class="progress-bar" style="width:${g.progress}%"></div></div>
+      <input type="range" min="0" max="100" value="${g.progress}" style="width:100%;margin-top:10px;accent-color:var(--accent);background:transparent;border:none" onchange="updateGoalProgress(${g.id},this.value)">
+    </div>`;
+  }).join('');
+}
+
+// ===== ATHLETIC =====
+function addWorkout() {
+  const type = document.getElementById('workout-type').value.trim();
+  if (!type) return;
+  workouts.unshift({ id: Date.now(), type, duration: document.getElementById('workout-duration').value, notes: document.getElementById('workout-notes').value, date: new Date().toLocaleDateString() });
+  save('workouts', workouts);
+  closeModal('workout-modal');
+  document.getElementById('workout-type').value = '';
+  document.getElementById('workout-duration').value = '';
+  document.getElementById('workout-notes').value = '';
+  renderAthletic();
+}
+
+function addPR() {
+  const ex = document.getElementById('pr-exercise').value.trim();
+  if (!ex) return;
+  const existing = prs.findIndex(p => p.exercise.toLowerCase() === ex.toLowerCase());
+  const newPR = { exercise: ex, value: document.getElementById('pr-value').value, unit: document.getElementById('pr-unit').value, date: new Date().toLocaleDateString() };
+  if (existing >= 0) prs[existing] = newPR; else prs.push(newPR);
+  save('prs', prs);
+  closeModal('pr-modal');
+  document.getElementById('pr-exercise').value = '';
+  document.getElementById('pr-value').value = '';
+  renderAthletic();
+}
+
+function saveMetrics() {
+  metrics = { weight: document.getElementById('m-weight').value, bf: document.getElementById('m-bf').value, height: document.getElementById('m-height').value, hr: document.getElementById('m-hr').value, updated: new Date().toLocaleDateString() };
+  save('metrics', metrics);
+  closeModal('metrics-modal');
+  renderAthletic();
+}
+
+function renderAthletic() {
+  document.getElementById('stat-weight').textContent = metrics.weight || '--';
+  document.getElementById('stat-workouts-total').textContent = workouts.length;
+
+  const oneWeekAgo = new Date(); oneWeekAgo.setDate(oneWeekAgo.getDate()-7);
+  const weekCount = workouts.filter(w => new Date(w.date) >= oneWeekAgo).length;
+  document.getElementById('stat-workouts-week').textContent = weekCount;
+  document.getElementById('stat-workout-streak').textContent = '—';
+
+  const prEl = document.getElementById('pr-list');
+  if (!prs.length) { prEl.innerHTML = '<div class="text-muted">No PRs logged yet.</div>'; }
+  else { prEl.innerHTML = prs.map(p => `<div class="transaction-item"><span>${p.exercise}</span><span style="font-weight:700;color:var(--accent)">${p.value} ${p.unit}</span></div>`).join(''); }
+
+  const mEl = document.getElementById('metrics-list');
+  if (!metrics.weight) { mEl.innerHTML = '<div class="text-muted">No metrics logged yet.</div>'; }
+  else {
+    const rows = [['Weight',metrics.weight+' lbs'],['Body Fat',metrics.bf ? metrics.bf+'%' : '--'],['Height',metrics.height ? metrics.height+' in' : '--'],['Resting HR',metrics.hr ? metrics.hr+' bpm' : '--'],['Updated',metrics.updated||'--']];
+    mEl.innerHTML = rows.map(([k,v]) => `<div class="transaction-item"><span class="text-muted">${k}</span><span style="font-weight:600">${v}</span></div>`).join('');
+  }
+
+  const wEl = document.getElementById('workout-log');
+  if (!workouts.length) { wEl.innerHTML = '<div class="text-muted">No workouts logged yet.</div>'; }
+  else {
+    wEl.innerHTML = workouts.slice(0,10).map(w => `<div class="exercise-item">
+      <span style="color:var(--accent);font-size:11px;min-width:80px">${w.date}</span>
+      <span class="ex-name">${w.type}</span>
+      ${w.duration ? `<span style="color:var(--muted);font-size:12px">${w.duration} min</span>` : ''}
+      ${w.notes ? `<span style="color:var(--muted);font-size:12px;max-width:200px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">${w.notes}</span>` : ''}
+    </div>`).join('');
+  }
+}
+
+// ===== FINANCE =====
+function addTransaction() {
+  const desc = document.getElementById('tx-desc').value.trim();
+  const amount = parseFloat(document.getElementById('tx-amount').value);
+  if (!desc || !amount) return;
+  transactions.unshift({ id: Date.now(), desc, amount, type: document.getElementById('tx-type').value, category: document.getElementById('tx-category').value, date: new Date().toLocaleDateString() });
+  save('transactions', transactions);
+  closeModal('transaction-modal');
+  document.getElementById('tx-desc').value = '';
+  document.getElementById('tx-amount').value = '';
+  renderFinance();
+}
+
+function deleteTransaction(id) {
+  transactions = transactions.filter(t => t.id !== id);
+  save('transactions', transactions);
+  renderFinance();
+}
+
+function addBudgetCat() {
+  const name = document.getElementById('budget-cat-name').value.trim();
+  const limit = parseFloat(document.getElementById('budget-cat-amount').value);
+  if (!name || !limit) return;
+  budgets.push({ name, limit });
+  save('budgets', budgets);
+  document.getElementById('budget-cat-name').value = '';
+  document.getElementById('budget-cat-amount').value = '';
+  renderBudgetEdit();
+  renderFinance();
+}
+
+function addAccount() {
+  const name = document.getElementById('acc-name').value.trim();
+  const balance = parseFloat(document.getElementById('acc-balance').value);
+  if (!name) return;
+  accounts.push({ id: Date.now(), name, balance: balance||0, type: document.getElementById('acc-type').value });
+  save('accounts', accounts);
+  closeModal('account-modal');
+  document.getElementById('acc-name').value = '';
+  document.getElementById('acc-balance').value = '';
+  renderFinance();
+}
+
+function renderFinance() {
+  const filter = document.getElementById('tx-filter') ? document.getElementById('tx-filter').value : 'all';
+  const thisMonth = new Date().toLocaleDateString().slice(-4) + new Date().toLocaleDateString().slice(0,2);
+
+  const income = transactions.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+  const spend = transactions.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  const networth = accounts.reduce((s,a) => a.type==='Debt' ? s-a.balance : s+a.balance, 0);
+
+  document.getElementById('fin-networth').textContent = '$'+networth.toLocaleString('en-US',{minimumFractionDigits:0});
+  document.getElementById('fin-income').textContent = '$'+income.toLocaleString('en-US',{minimumFractionDigits:0});
+  document.getElementById('fin-spend').textContent = '$'+spend.toLocaleString('en-US',{minimumFractionDigits:0});
+
+  const savingsRate = income > 0 ? Math.round((income-spend)/income*100) : 0;
+  document.getElementById('fin-savings-rate').textContent = savingsRate+'%';
+  document.getElementById('savings-bar').style.width = Math.max(0,Math.min(100,savingsRate))+'%';
+
+  // Transactions
+  const txEl = document.getElementById('transactions-list');
+  let filtered = filter === 'all' ? transactions : transactions.filter(t => t.type===filter);
+  if (!filtered.length) { txEl.innerHTML = '<div class="text-muted">No transactions yet.</div>'; }
+  else {
+    txEl.innerHTML = filtered.slice(0,15).map(t => `<div class="transaction-item">
+      <div>
+        <div style="font-weight:500;font-size:13px">${t.desc}</div>
+        <div style="font-size:11px;color:var(--muted)">${t.category} · ${t.date}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="${t.type==='income'?'finance-positive':'finance-negative'}" style="font-weight:700">${t.type==='income'?'+':'-'}$${t.amount.toLocaleString()}</span>
+        <button style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px" onclick="deleteTransaction(${t.id})">×</button>
+      </div>
+    </div>`).join('');
+  }
+
+  // Budgets
+  const budgetEl = document.getElementById('budget-list');
+  if (!budgets.length) { budgetEl.innerHTML = '<div class="text-muted">No budget categories.</div>'; }
+  else {
+    budgetEl.innerHTML = budgets.map(b => {
+      const spent = transactions.filter(t=>t.type==='expense'&&t.category===b.name).reduce((s,t)=>s+t.amount,0);
+      const pct = Math.min(100, b.limit ? Math.round(spent/b.limit*100) : 0);
+      const color = pct > 90 ? 'var(--red)' : pct > 70 ? 'var(--yellow)' : 'var(--accent)';
+      return `<div style="margin-bottom:14px">
+        <div class="flex-between" style="margin-bottom:4px">
+          <span style="font-size:13px">${b.name}</span>
+          <span style="font-size:12px;color:var(--muted)">$${spent.toFixed(0)} / $${b.limit}</span>
+        </div>
+        <div class="progress-wrap"><div class="progress-bar" style="width:${pct}%;background:${color}"></div></div>
+      </div>`;
+    }).join('');
+  }
+
+  // Accounts
+  const accEl = document.getElementById('accounts-list');
+  if (!accounts.length) { accEl.innerHTML = '<div class="text-muted" style="grid-column:1/-1">No accounts added yet.</div>'; }
+  else {
+    accEl.innerHTML = accounts.map(a => `<div class="card" style="padding:14px">
+      <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">${a.type}</div>
+      <div style="font-weight:600;margin-bottom:4px">${a.name}</div>
+      <div style="font-size:20px;font-weight:700;color:${a.type==='Debt'?'var(--red)':'var(--green)'}">${a.type==='Debt'?'-':''}$${parseFloat(a.balance||0).toLocaleString()}</div>
+    </div>`).join('');
+  }
+}
+
+function renderBudgetEdit() {
+  const el = document.getElementById('budget-edit-list');
+  el.innerHTML = budgets.map((b,i) => `<div class="flex-between" style="padding:8px 0;border-bottom:1px solid var(--border)">
+    <span style="font-size:13px">${b.name}</span>
+    <div class="flex-gap">
+      <span style="color:var(--muted);font-size:13px">$${b.limit}</span>
+      <button class="btn btn-danger btn-sm" onclick="removeBudgetCat(${i})">×</button>
+    </div>
+  </div>`).join('');
+}
+
+function removeBudgetCat(i) {
+  budgets.splice(i,1);
+  save('budgets', budgets);
+  renderBudgetEdit();
+  renderFinance();
+}
+
+// ===== BUSINESS =====
+function addIdea() {
+  const title = document.getElementById('idea-title').value.trim();
+  if (!title) return;
+  ideas.push({ id: Date.now(), title, desc: document.getElementById('idea-desc').value, status: document.getElementById('idea-status').value, date: new Date().toLocaleDateString() });
+  save('ideas', ideas);
+  closeModal('idea-modal');
+  document.getElementById('idea-title').value = '';
+  document.getElementById('idea-desc').value = '';
+  renderBusiness();
+}
+
+function deleteIdea(id) {
+  ideas = ideas.filter(i => i.id !== id);
+  save('ideas', ideas);
+  renderBusiness();
+}
+
+function moveIdea(id, status) {
+  const idea = ideas.find(i => i.id === id);
+  if (idea) { idea.status = status; save('ideas', ideas); renderBusiness(); }
+}
+
+function renderBusiness() {
+  document.getElementById('biz-total').textContent = ideas.length;
+  document.getElementById('biz-active').textContent = ideas.filter(i=>i.status==='progress').length;
+  document.getElementById('biz-validated').textContent = ideas.filter(i=>i.status==='validated').length;
+
+  const renderGroup = (el, items) => {
+    if (!items.length) { el.innerHTML = '<div class="text-muted" style="font-size:12px">None yet.</div>'; return; }
+    el.innerHTML = items.map(i => `<div class="idea-card">
+      <div class="idea-title">${i.title}
+        <button style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;flex-shrink:0" onclick="deleteIdea(${i.id})">×</button>
+      </div>
+      ${i.desc ? `<div class="idea-desc">${i.desc}</div>` : ''}
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        ${i.status!=='idea'?`<button class="btn btn-ghost btn-sm" onclick="moveIdea(${i.id},'idea')">← Idea</button>`:''}
+        ${i.status!=='progress'?`<button class="btn btn-ghost btn-sm" onclick="moveIdea(${i.id},'progress')">🔨 Start</button>`:''}
+        ${i.status!=='validated'?`<button class="btn btn-ghost btn-sm" onclick="moveIdea(${i.id},'validated')">✅ Validate</button>`:''}
+      </div>
+    </div>`).join('');
+  };
+
+  renderGroup(document.getElementById('biz-ideas'), ideas.filter(i=>i.status==='idea'));
+  renderGroup(document.getElementById('biz-in-progress'), ideas.filter(i=>i.status==='progress'));
+  renderGroup(document.getElementById('biz-validated-list'), ideas.filter(i=>i.status==='validated'));
+}
+
+// ===== INTEGRATIONS =====
+function saveSpotifyKey() {
+  const id = document.getElementById('spotify-client-id').value.trim();
+  if (!id) return;
+  save('spotify-client-id', id);
+  closeModal('spotify-modal');
+  updateIntegrationStatus();
+}
+
+function saveGmailKey() {
+  const id = document.getElementById('gmail-client-id').value.trim();
+  if (!id) return;
+  save('gmail-client-id', id);
+  closeModal('gmail-modal');
+  updateIntegrationStatus();
+}
+
+function saveGCalKey() {
+  const id = document.getElementById('gcal-client-id').value.trim();
+  if (!id) return;
+  save('gcal-client-id', id);
+  closeModal('gcal-modal');
+  updateIntegrationStatus();
+}
+
+function updateIntegrationStatus() {
+  const sp = load('spotify-client-id','');
+  const gm = load('gmail-client-id','');
+  const gc = load('gcal-client-id','');
+
+  document.getElementById('spotify-dot').className = 'int-dot' + (sp ? ' connected' : '');
+  document.getElementById('spotify-status-text').textContent = sp ? 'Client ID saved — OAuth flow needed' : 'Not connected';
+
+  document.getElementById('gmail-dot').className = 'int-dot' + (gm ? ' connected' : '');
+  document.getElementById('gmail-status-text').textContent = gm ? 'Client ID saved — OAuth flow needed' : 'Not connected';
+
+  document.getElementById('gcal-dot').className = 'int-dot' + (gc ? ' connected' : '');
+  document.getElementById('gcal-status-text').textContent = gc ? 'Client ID saved — OAuth flow needed' : 'Not connected';
+
+  // Pre-fill inputs
+  if (sp) document.getElementById('spotify-client-id').value = sp;
+  if (gm) { document.getElementById('gmail-client-id').value = gm; document.getElementById('gcal-client-id').value = gm; }
+}
+
+// ===== MODAL HELPERS =====
+function openModal(id) {
+  if (id === 'budget-modal') renderBudgetEdit();
+  if (id === 'metrics-modal') {
+    if (metrics.weight) document.getElementById('m-weight').value = metrics.weight;
+    if (metrics.bf) document.getElementById('m-bf').value = metrics.bf;
+    if (metrics.height) document.getElementById('m-height').value = metrics.height;
+    if (metrics.hr) document.getElementById('m-hr').value = metrics.hr;
+  }
+  document.getElementById(id).classList.add('open');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
+});
+
+// ===== RENDER ALL =====
+function renderAll() {
+  renderMorningSummary();
+  renderTodos();
+  renderHabits();
+  renderGoals();
+  renderAthletic();
+  renderFinance();
+  renderBusiness();
+  updateIntegrationStatus();
+}
+
+// ===== INIT =====
+initMorning();
+renderAll();
+</script>
+</body>
+</html>
