@@ -1,6 +1,6 @@
 # Status & handoff notes
 
-Read this first when picking the project up in a new session, on any device. Update it at the end of each session.
+Personal project. Read this first when picking the project up in a new session, on any device. Update it at the end of each session.
 
 _Last updated: 2026-11-03_
 
@@ -10,7 +10,7 @@ _Last updated: 2026-11-03_
 - PR #1 (Spotify + "Netlify auto-deploy") was closed: its Spotify work is already on `main`, and it contained no Netlify setup.
 
 ## Open questions for Paul
-- [ ] Build the "Organized Life" design as a real app (e.g. React + Vite + Supabase, like SimpleCRM), or keep evolving `dashboard.html`?
+- [ ] Build the "Organized Life" design as a real app (the handoff assumes React + Supabase), or keep evolving `dashboard.html`?
 - [ ] Where should it be hosted? (Auto-deploy was never actually set up.)
 
 ## Next up
